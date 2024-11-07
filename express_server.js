@@ -17,6 +17,11 @@ function generateRandomString() {
   return Math.random().toString(36).substring(2, 8);
 }
 
+app.use((req, res, next) => {
+  res.locals.username = req.cookies.username;
+  next();
+});
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
