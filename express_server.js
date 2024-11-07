@@ -3,10 +3,10 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const PORT = 8080;
 
-app.set("view engine", "ejs");
-
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+app.set("view engine", "ejs");
 
 const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
@@ -35,7 +35,9 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { 
+    urls: urlDatabase 
+  };
   res.render("urls_index", templateVars);
 });
 
@@ -46,7 +48,10 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id];
-  const templateVars = { id: id, longURL: longURL };
+  const templateVars = { 
+    id: id, 
+    longURL: longURL 
+  };
   res.render("urls_show", templateVars);
 });
 
