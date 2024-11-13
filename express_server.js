@@ -1,10 +1,18 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const session = require('express-session');
 const app = express();
 const PORT = 8080;
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Session middleware setup
+app.use(session({
+  secret: 'some-secret-key',
+  resave: false,
+  saveUninitialized: true
+}));
 
 app.set("view engine", "ejs");
 
@@ -13,16 +21,33 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com",
 };
 
+// User object database for users
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+
 function generateRandomString() {
   return Math.random().toString(36).substring(2, 8);
 }
 
+// Middleware for session-based user management
 app.use((req, res, next) => {
-  res.locals.username = req.cookies.username;
+  if (req.session.user) {
+    res.locals.user = req.session.user;
+  }
   next();
 });
 
-//GET routes
+// GET routes
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -36,14 +61,14 @@ app.get("/register", (req, res) => {
   res.render("register");
 });
 
-
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.get("/urls", (req, res) => {
   const templateVars = { 
-    urls: urlDatabase 
+    urls: urlDatabase, 
+    user: req.session.user
   };
   res.render("urls_index", templateVars);
 });
@@ -73,14 +98,13 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
-//POST routes
+// POST routes
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
 });
-
 
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
@@ -95,13 +119,48 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie("username", username);
-  res.redirect("/urls");
+  const { email, password } = req.body;
+
+  const user = users[email];
+  if (user && user.password === password) {
+    req.session.user = user;
+    return res.redirect("/urls");
+  }
+  res.status(403).send("Invalid credentials");
 });
 
+
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).send("Failed to log out");
+    }
+    res.redirect("/urls");
+  });
+});
+
+app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).send("Email and password cannot be blank");
+  }
+
+  for (let userID in users) {
+    if (users[userID].email === email) {
+      return res.status(400).send("Email already exists");
+    }
+  }
+
+  const userID = generateRandomString();
+
+  users[userID] = {
+    id: userID,
+    email,
+    password,
+  };
+
+  req.session.user = users[userID];
   res.redirect("/urls");
 });
 
