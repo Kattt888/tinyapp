@@ -22,6 +22,8 @@ app.use((req, res, next) => {
   next();
 });
 
+//GET routes
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -60,12 +62,6 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect(`/urls/${shortURL}`);
-});
-
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
@@ -76,6 +72,15 @@ app.get("/u/:id", (req, res) => {
     res.status(404).send("URL not found");
   }
 });
+
+//POST routes
+
+app.post("/urls", (req, res) => {
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect(`/urls/${shortURL}`);
+});
+
 
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
