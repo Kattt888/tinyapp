@@ -4,6 +4,16 @@ const session = require('express-session');
 const app = express();
 const PORT = 8080;
 
+// Helper function to find a user by email
+const getUserByEmail = (email, users) => {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return null;
+};
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -153,7 +163,6 @@ app.post("/register", (req, res) => {
   }
 
   const userID = generateRandomString();
-
   users[userID] = {
     id: userID,
     email,
