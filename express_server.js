@@ -141,11 +141,11 @@ app.post("/login", (req, res) => {
   const user = getUserByEmail(email, users);
 
   if (!user) {
-    return res.status(403).render("login", { error: "Email not found"});
+    return res.status(403).send("Email not found");
   }
   
   if (user.password !== password) {
-    return res.status(403).render("login", { error: "Invalid password" });
+    return res.status(403).send("Invalid password");
   }
 
   req.cookies("user_id", user.id);
@@ -175,7 +175,7 @@ app.post("/register", (req, res) => {
     password,
   };
 
-  req.session.user = users[userID];
+  req.cookie("user_id", userID);
   res.redirect("/urls");
 });
 
