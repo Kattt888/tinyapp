@@ -51,8 +51,11 @@ function generateRandomString() {
 
 // Middleware for session-based user management
 app.use((req, res, next) => {
-  if (req.session.user) {
-    res.locals.user = req.session.user;
+  const userId = req.cookies["user_id"];
+  if (userId && users[userId]) {
+    res.locals.user = users[userId];
+  } else {
+    res.locals.user = null;
   }
   next();
 });
@@ -78,7 +81,7 @@ app.get("/hello", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = { 
     urls: urlDatabase, 
-    user: req.session.user
+    user: res.locals.user
   };
   res.render("urls_index", templateVars);
 });
@@ -92,7 +95,8 @@ app.get("/urls/:id", (req, res) => {
   const longURL = urlDatabase[id];
   const templateVars = { 
     id: id, 
-    longURL: longURL 
+    longURL: longURL, 
+    user: res.locals.user
   };
   res.render("urls_show", templateVars);
 });
@@ -134,29 +138,23 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).render("login", { error: "Email and password cannot be blank"});
-  }
-
   const user = getUserByEmail(email, users);
+
+  if (!user) {
+    return res.status(403).render("login", { error: "Email not found"});
+  }
   
-  if (!user || user.password !== password) {
-    return res.status(403).render ("login", { error: "Invalid email or password" });
+  if (user.password !== password) {
+    return res.status(403).render("login", { error: "Invalid password" });
   }
 
-  req.session.user = user;
+  req.cookies("user_id", user.id);
   res.redirect("/urls");
 });
 
-
 app.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).send("Failed to log out");
-    }
-    res.redirect("/urls");
-  });
+  req.clearCookie("user_id");
+  res.redirect('/login');
 });
 
 app.post("/register", (req, res) => {
