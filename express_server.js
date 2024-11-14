@@ -108,6 +108,10 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
+app.get("/login", (req, res) => {
+res.render("login");
+});
+
 // POST routes
 
 app.post("/urls", (req, res) => {
@@ -131,12 +135,18 @@ app.post("/urls/:id", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
-  const user = users[email];
-  if (user && user.password === password) {
-    req.session.user = user;
-    return res.redirect("/urls");
+  if (!email || !password) {
+    return res.status(400).render("login", { error: "Email and password cannot be blank"});
   }
-  res.status(403).send("Invalid credentials");
+
+  const user = getUserByEmail(email, users);
+  
+  if (!user || user.password !== password) {
+    return res.status(403).render ("login", { error: "Invalid email or password" });
+  }
+
+  req.session.user = user;
+  res.redirect("/urls");
 });
 
 
@@ -156,10 +166,8 @@ app.post("/register", (req, res) => {
     return res.status(400).send("Email and password cannot be blank");
   }
 
-  for (let userID in users) {
-    if (users[userID].email === email) {
-      return res.status(400).send("Email already exists");
-    }
+  if (getUserByEmail(email, users)) {
+    return res.status(400).send("Email already exists");
   }
 
   const userID = generateRandomString();
