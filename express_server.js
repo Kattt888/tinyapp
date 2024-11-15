@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const session = require('express-session');
+const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080;
 
@@ -13,6 +14,16 @@ const getUserByEmail = (email, users) => {
   }
   return null;
 };
+
+function urlsForUser(id) {
+  const filteredURLs = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      filteredURLs[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return filteredURLs;
+}
 
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -27,8 +38,14 @@ app.use(session({
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b2xVn2: {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "aJ48lW",
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "aJ48lW",
+  },
 };
 
 // User object database for users
@@ -58,7 +75,6 @@ app.use((req, res, next) => {
 });
 
 // GET routes
-
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -74,14 +90,15 @@ app.get("/register", (req, res) => {
   res.render("register");
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
-
 app.get("/urls", (req, res) => {
+  const user = res.locals.user;
+  if (!user) {
+    return res.status(401).send("Please log in or register to view your URLs.");
+  }
+  const userURLs = urlsForUser(user.id);
   const templateVars = { 
-    urls: urlDatabase, 
-    user: res.locals.user
+    urls: userURLs, 
+    user 
   };
   res.render("urls_index", templateVars);
 });
@@ -116,7 +133,10 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-res.render("login");
+  const templateVars = {
+    error: null
+  };
+  res.render("login", templateVars);
 });
 
 // POST routes
@@ -149,14 +169,16 @@ app.post("/login", (req, res) => {
   const user = getUserByEmail(email, users);
 
   if (!user) {
-    return res.status(403).send("Email not found");
-  }
-  
-  if (user.password !== password) {
-    return res.status(403).send("Invalid password");
+    const templateVars = { error: "Email not found" };
+    return res.status(403).render("login", templateVars);
   }
 
-  req.cookies("user_id", user.id);
+  if (!bcrypt.compareSync(password, user.password)) {
+    const templateVars = { error: "Invalid password" };
+    return res.status(403).render("login", templateVars);
+  }
+
+  req.session.user = user.id;
   res.redirect("/urls");
 });
 
@@ -177,13 +199,18 @@ app.post("/register", (req, res) => {
   }
 
   const userID = generateRandomString();
+
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
   users[userID] = {
     id: userID,
     email,
-    password,
+    password: hashedPassword,
   };
 
-  req.cookie("user_id", userID);
+  req.session.user_id = userID;
+  res.cookie("user_id", userID);
+  
   res.redirect("/urls");
 });
 
