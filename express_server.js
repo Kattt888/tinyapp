@@ -1,5 +1,5 @@
 const express = require("express");
-const cookieParser = require("cookie-parser");
+const cookieSession = require('cookie-session');
 const session = require('express-session');
 const bcrypt = require("bcryptjs");
 const app = express();
@@ -26,7 +26,13 @@ function urlsForUser(id) {
 }
 
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+
+app.use(cookieSession({
+  name: 'session',
+  keys: ['your-secret-key'], 
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}));
+
 
 // Session middleware setup
 app.use(session({
@@ -84,7 +90,7 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  if (req.session.user) {
+  if (req.session.user_id) {
     return res.redirect("/urls");
   }
   res.render("register");
@@ -104,7 +110,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.session.user) {
+  if (!req.session.user_id) {
     return res.redirect("/login");
   }
   res.render("urls_new");
@@ -178,12 +184,13 @@ app.post("/login", (req, res) => {
     return res.status(403).render("login", templateVars);
   }
 
-  req.session.user = user.id;
+  req.session.user_id = user.id;
+
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  req.clearCookie("user_id");
+  req.session = null;
   res.redirect('/login');
 });
 
@@ -209,8 +216,7 @@ app.post("/register", (req, res) => {
   };
 
   req.session.user_id = userID;
-  res.cookie("user_id", userID);
-  
+
   res.redirect("/urls");
 });
 
