@@ -51,11 +51,8 @@ function generateRandomString() {
 
 // Middleware for session-based user management
 app.use((req, res, next) => {
-  const userId = req.cookies["user_id"];
-  if (userId && users[userId]) {
-    res.locals.user = users[userId];
-  } else {
-    res.locals.user = null;
+  if (req.session.user) {
+    res.locals.user = req.session.user;
   }
   next();
 });
@@ -71,6 +68,9 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
+  if (req.session.user) {
+    return res.redirect("/urls");
+  }
   res.render("register");
 });
 
@@ -87,6 +87,9 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+  if (!req.session.user) {
+    return res.redirect("/login");
+  }
   res.render("urls_new");
 });
 
@@ -105,11 +108,11 @@ app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
 
-  if (longURL) {
-    res.redirect(longURL);
-  } else {
-    res.status(404).send("URL not found");
+  if (!longURL) {
+    return res.status(404).send("Short URL not found.");
   }
+
+  res.redirect(longURL);
 });
 
 app.get("/login", (req, res) => {
@@ -119,6 +122,11 @@ res.render("login");
 // POST routes
 
 app.post("/urls", (req, res) => {
+  if (!req.session.user) {
+    return res
+      .status(403)
+      .send("You must be logged in to shorten URLs.");
+  }
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(`/urls/${shortURL}`);
