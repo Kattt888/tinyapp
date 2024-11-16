@@ -2,6 +2,7 @@ const express = require("express");
 const session = require('express-session');
 const bcrypt = require("bcryptjs");
 const { getUserByEmail } = require('./helpers.js');
+import { generateRandomString } from './helpers.js';
 const app = express();
 const PORT = 8080;
 
@@ -39,10 +40,6 @@ const users = {
     password: "dishwasher-funk",
   },
 };
-
-function generateRandomString() {
-  return Math.random().toString(36).substring(2, 8);
-}
 
 // Middleware for session-based user management
 app.use((req, res, next) => {
