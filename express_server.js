@@ -1,38 +1,11 @@
 const express = require("express");
-const cookieSession = require('cookie-session');
 const session = require('express-session');
 const bcrypt = require("bcryptjs");
+const { getUserByEmail } = require('./helpers.js');
 const app = express();
 const PORT = 8080;
 
-// Helper function to find a user by email
-const getUserByEmail = (email, users) => {
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      return users[userId];
-    }
-  }
-  return null;
-};
-
-function urlsForUser(id) {
-  const filteredURLs = {};
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL].userID === id) {
-      filteredURLs[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return filteredURLs;
-}
-
 app.use(express.urlencoded({ extended: true }));
-
-app.use(cookieSession({
-  name: 'session',
-  keys: ['your-secret-key'], 
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}));
-
 
 // Session middleware setup
 app.use(session({
@@ -54,7 +27,6 @@ const urlDatabase = {
   },
 };
 
-// User object database for users
 const users = {
   userRandomID: {
     id: "userRandomID",
@@ -80,6 +52,17 @@ app.use((req, res, next) => {
   next();
 });
 
+// Helper function to filter URLs for a specific user
+function urlsForUser(id) {
+  const filteredURLs = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      filteredURLs[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return filteredURLs;
+}
+
 // GET routes
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -90,7 +73,7 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  if (req.session.user_id) {
+  if (req.session.user) {
     return res.redirect("/urls");
   }
   res.render("register");
@@ -110,7 +93,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.session.user_id) {
+  if (!req.session.user) {
     return res.redirect("/login");
   }
   res.render("urls_new");
@@ -135,7 +118,7 @@ app.get("/u/:id", (req, res) => {
     return res.status(404).send("Short URL not found.");
   }
 
-  res.redirect(longURL);
+  res.redirect(longURL.longURL);
 });
 
 app.get("/login", (req, res) => {
@@ -149,12 +132,10 @@ app.get("/login", (req, res) => {
 
 app.post("/urls", (req, res) => {
   if (!req.session.user) {
-    return res
-      .status(403)
-      .send("You must be logged in to shorten URLs.");
+    return res.status(403).send("You must be logged in to shorten URLs.");
   }
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = { longURL: req.body.longURL, userID: req.session.user.id };
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -166,7 +147,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
-  urlDatabase[id] = req.body.longURL;
+  urlDatabase[id].longURL = req.body.longURL;
   res.redirect("/urls");
 });
 
@@ -184,8 +165,7 @@ app.post("/login", (req, res) => {
     return res.status(403).render("login", templateVars);
   }
 
-  req.session.user_id = user.id;
-
+  req.session.user = user;
   res.redirect("/urls");
 });
 
@@ -215,7 +195,7 @@ app.post("/register", (req, res) => {
     password: hashedPassword,
   };
 
-  req.session.user_id = userID;
+  req.session.user = users[userID];
 
   res.redirect("/urls");
 });
