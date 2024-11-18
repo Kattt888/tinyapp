@@ -15,8 +15,15 @@ function generateRandomString() {
   return Math.random().toString(36).substring(2, 8);
 }
 
+//GET Routes
+
 app.get("/", (req, res) => {
   res.send("Hello!");
+});
+
+app.get("/login", (req, res) => {
+  const templateVars = { error: null };
+  res.render("login", templateVars);
 });
 
 app.get("/urls.json", (req, res) => {
@@ -43,12 +50,6 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect(`/urls/${shortURL}`);
-});
-
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
@@ -60,6 +61,14 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
+//POST Routes
+
+app.post("/urls", (req, res) => {
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect(`/urls/${shortURL}`);
+});
+
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
   delete urlDatabase[id];
@@ -69,6 +78,18 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   urlDatabase[id] = req.body.longURL;
+  res.redirect("/urls");
+});
+
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    const templateVars = { error: "Email and password cannot be blank." };
+    return res.render("login", templateVars);
+  }
+
+  res.cookie("userEmail", email);
   res.redirect("/urls");
 });
 
