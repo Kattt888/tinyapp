@@ -1,5 +1,6 @@
 const express = require("express");
 const cookieSession = require("cookie-session");
+const { generateRandomString } = require('./helpers');
 const bcrypt = require("bcryptjs");
 
 const app = express();
@@ -11,29 +12,32 @@ app.use(express.urlencoded({ extended: true }));
 app.use(
   cookieSession({
     name: "session",
-    keys: ["secretKey"], // Replace with a secure key in production
+    keys: ["secretKey"], 
   })
 );
 
 // Database
-const urlDatabase = {};
+const urlDatabase = {
+  b2xVn2: "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com",
+};
 const users = {};
 
-// Helper Functions
-function generateRandomString() {
-  return Math.random().toString(36).substring(2, 8);
-}
 
-function getUserByEmail(email, users) {
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      return users[userId];
-    }
-  }
-  return null;
-}
+// GET Routes
 
-// Routes
+app.get("/", (req, res) => {
+  res.send("Hello!");
+});
+
+app.get("/urls.json", (req, res) => {
+  res.json(urlDatabase);
+});
+
+app.get("/hello", (req, res) => {
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
+
 app.get("/", (req, res) => {
   const userId = req.session.userId;
   if (userId) {
@@ -119,6 +123,7 @@ app.get("/register", (req, res) => {
   const templateVars = { user: null };
   res.render("register", templateVars);
 });
+
 
 // POST Routes
 app.post("/urls", (req, res) => {
