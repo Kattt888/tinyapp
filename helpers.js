@@ -1,31 +1,35 @@
 // Function to find a user by email
-export const getUserByEmail = (email, database) => {
-  if (!email || typeof email !== "string") return undefined;
-  if (!database || typeof database !== "object") return undefined;
+const getUserByEmail = (email, database) => {
+  
+  if (typeof email !== "string" || !email.trim()) return undefined;
+  if (typeof database !== "object" || database === null) return undefined;
 
-  for (let userId in database) {
-    if (database[userId].email === email) {
-      return database[userId];
+  
+  for (const userId in database) {
+    const user = database[userId];
+    if (user && user.email === email) {
+      return user;
     }
   }
   return undefined;
 };
 
 // Function to return URLs associated with a specific user
-export const urlsForUser = (userId, urlDatabase) => {
+const urlsForUser = (userId, urlDatabase) => {
   const userUrls = {};
-  if (!userId || typeof userId !== "string") return userUrls;
+  if (typeof userId !== "string" || !userId.trim()) return userUrls;
+  if (typeof urlDatabase !== "object" || urlDatabase === null) return userUrls;
 
-  for (let url in urlDatabase) {
+  for (const url in urlDatabase) {
     if (urlDatabase[url].userId === userId) {
-      userUrls[url] = urlDatabase[url];
+      userUrls[url] = urlDatabase[url].longURL;
     }
   }
   return userUrls;
 };
 
 // Function to generate a random 6-character string
-export const generateRandomString = () => {
+const generateRandomString = () => {
   const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   for (let i = 0; i < 6; i++) {
@@ -33,4 +37,8 @@ export const generateRandomString = () => {
   }
   return result;
 };
+
+// Export the functions
+module.exports = { getUserByEmail, urlsForUser, generateRandomString };
+
 

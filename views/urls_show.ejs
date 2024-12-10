@@ -1,49 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <!-- Bootstrap CSS -->
-    <link
-      rel="stylesheet"
-      href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
-      integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
-      crossorigin="anonymous"
-    />
-    <title>URL - TinyApp Example</title>
-  </head>
 
-  <body>
-    <%- include('partials/_header') %>
-    <div class="card text-center">
-      <div class="card-header"></div>
-      <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
-        <p class="card-text">
-          Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
-        </p>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>View URL - TinyApp</title>
 
-        <form action="/urls/<%= id %>" method="POST">
-          <input type="text" name="longURL" value="<%= longURL %>" required>
-          <button type="submit">Update URL</button>
-        </form>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+    integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous" />
+</head>
 
+<body>
+  <%- include('partials/_header') %>
+
+    <main class="container mt-4">
+      <div class="card text-center">
+        <div class="card-header">
+          <h4>URL Details</h4>
+        </div>
+
+        <div class="card-body">
+          <h5 class="card-title">TinyURL for:</h5>
+          <p class="card-text">
+            <strong>Original URL:</strong>
+            <%= longURL %>
+          </p>
+
+          <p class="card-text">
+            <strong>Short URL ID:</strong>
+            <a href="/u/<%= id %>">
+              <%= id %>
+            </a>
+          </p>
+
+          <!-- URL Update Form -->
+          <form class="mt-3" action="/urls/<%= id %>" method="POST">
+            <div class="form-group">
+              <label for="longURL">Update URL:</label>
+              <input class="form-control" type="url" id="longURL" name="longURL" value="<%= longURL %>" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Update URL</button>
+          </form>
+        </div>
+
+        <div class="card-footer text-muted">
+          <form action="/urls/<%= id %>/delete" method="POST"
+            onsubmit="return confirm('Are you sure you want to delete this URL?');">
+            <button type="submit" class="btn btn-danger">Delete URL</button>
+          </form>
+        </div>
       </div>
-      <div class="card-footer text-muted"></div>
-    </div>
+    </main>
+
     <!-- Bootstrap JS -->
-    <script
-      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-      integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-      integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-      integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-      crossorigin="anonymous"
-    ></script>
-  </body>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+      integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy5bWl4pW9z2m7z6gFqF92zC0mTrw7RmBf0S7g5p"
+      crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"
+      integrity="sha384-Xw4/ZnAiZAf34A3dAcRj94V6Dnbd/QOpzxAk69DdP0hFgCQ5IWUm3FQOk9e06YYs"
+      crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+      integrity="sha384-TX8t27z1K1z5BZzV+fr1NP+F0bVtQdZP+ijwQZlXfJXY5kKQle0ke3Lg5Bhv0Fvq"
+      crossorigin="anonymous"></script>
+</body>
+
 </html>
